@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { MODELS } from "@/lib/providers";
 import { HtmlHistory } from "@/types";
 import { InviteFriends } from "@/components/invite-friends";
-// import { Settings } from "@/components/editor/ask-ai/settings";
+import { Settings } from "@/components/editor/ask-ai/settings";
 import { ReImagine } from "@/components/editor/ask-ai/re-imagine";
 import Loading from "@/components/loading";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -293,25 +293,21 @@ export function AskAI({
 
   return (
     <div className="px-3">
-    <div className="px-3">
       <div className="relative bg-neutral-800 border border-neutral-700 rounded-2xl ring-[4px] focus-within:ring-neutral-500/30 focus-within:border-neutral-600 ring-transparent z-10 w-full group">
+        {/* Think/Plan Section */}
         {think && (
           <div className="w-full border-b border-neutral-700 relative overflow-hidden">
             <header
               className="flex items-center justify-between px-5 py-2.5 group hover:bg-neutral-600/20 transition-colors duration-200 cursor-pointer"
-              onClick={() => {
-                setOpenThink(!openThink);
-              }}
+              onClick={() => setOpenThink(!openThink)}
             >
               <p className="text-sm font-medium text-neutral-300 group-hover:text-neutral-200 transition-colors duration-200">
-                  {isThinking ? "Retro Builder is thinking..." : "Retro Builder's plan"}
+                {isThinking ? "Retro Builder is thinking..." : "Retro Builder's plan"}
               </p>
               <ChevronDown
                 className={classNames(
                   "size-4 text-neutral-400 group-hover:text-neutral-300 transition-all duration-200",
-                  {
-                    "rotate-180": openThink,
-                  }
+                  { "rotate-180": openThink }
                 )}
               />
             </header>
@@ -321,17 +317,16 @@ export function AskAI({
                 "overflow-y-auto transition-all duration-200 ease-in-out",
                 {
                   "max-h-[0px]": !openThink,
-                  "min-h-[250px] max-h-[250px] border-t border-neutral-700":
-                    openThink,
+                  "min-h-[250px] max-h-[250px] border-t border-neutral-700": openThink,
                 }
               )}
             >
-              <p className="text-[13px] text-neutral-400 whitespace-pre-line px-5 pb-4 pt-3">
-                {think}
-              </p>
+              <p className="text-[13px] text-neutral-400 whitespace-pre-line px-5 pb-4 pt-3">{think}</p>
             </main>
           </div>
         )}
+
+        {/* Selected Element Section */}
         {selectedElement && (
           <div className="px-4 pt-3">
             <SelectedHtmlElement
@@ -341,85 +336,107 @@ export function AskAI({
             />
           </div>
         )}
-        <div className="w-full relative flex items-center justify-between">
-          <input
-            type="text"
-            disabled={isAiWorking}
-            className={classNames(
-              "w-full bg-transparent text-sm outline-none text-white placeholder:text-neutral-400 p-4",
-              {
-                "!pt-2.5": selectedElement && !isAiWorking,
+
+        {/* Input Area with Loading/Stop Overlay */}
+        <div className="w-full relative flex flex-col gap-0">
+          {/* Loading/Stop Overlay */}
+          {isAiWorking && (
+            <div className="absolute bg-neutral-800 rounded-lg bottom-0 left-4 w-[calc(100%-30px)] h-full z-10 flex items-center justify-between max-lg:text-sm px-4 py-2 border border-neutral-700">
+              <div className="flex items-center gap-2">
+                <Loading overlay={false} className="!size-4" />
+                <p className="text-neutral-400 text-sm">
+                  AI is {isThinking ? "thinking" : "coding"}...
+                </p>
+              </div>
+              <div
+                className="text-xs text-neutral-400 px-1 py-0.5 rounded-md border border-neutral-600 flex items-center gap-1.5 bg-neutral-800 hover:brightness-110 transition-all duration-200 cursor-pointer"
+                onClick={stopController}
+              >
+                <FaStopCircle />
+                Stop generation
+              </div>
+            </div>
+          )}
+
+          {/* Input Row */}
+          <div className="flex items-center gap-2 w-full">
+            <input
+              type="text"
+              disabled={isAiWorking}
+              className={classNames(
+                "w-full bg-transparent text-sm outline-none text-white placeholder:text-neutral-400 p-4",
+                {
+                  "!pt-2.5": selectedElement && !isAiWorking,
+                }
+              )}
+              placeholder={
+                selectedElement
+                  ? `Ask Retro Builder about ${selectedElement.tagName.toLowerCase()}...`
+                  : hasAsked
+                  ? "Ask Retro Builder for edits"
+                  : "Ask Retro Builder anything..."
               }
-            )}
-            placeholder={
-              selectedElement
-                ? `Ask Retro Builder about ${selectedElement.tagName.toLowerCase()}...`
-                : hasAsked
-                ? "Ask Retro Builder for edits"
-                : "Ask Retro Builder anything..."
-            }
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                callAi();
-              }
-            }}
-          />
-        </div>
-          <div className="flex-1 flex items-center justify-start gap-1.5">
-            <ReImagine onRedesign={(md) => callAi(md)} />
-            {!isSameHtml && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="xs"
-                    variant={isEditableModeEnabled ? "default" : "outline"}
-                    onClick={() => {
-                      setIsEditableModeEnabled?.(!isEditableModeEnabled);
-                    }}
-                    className={classNames("h-[28px]", {
-                      "!text-neutral-400 hover:!text-neutral-200 !border-neutral-600 !hover:!border-neutral-500":
-                        !isEditableModeEnabled,
-                    })}
-                  >
-                    <Crosshair className="size-4" />
-                    Edit
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent
-                  align="start"
-                  className="bg-neutral-950 text-xs text-neutral-200 py-1 px-2 rounded-md -translate-y-0.5"
-                >
-                  Select an element on the page to ask Retro Builder edit it
-                  directly.
-                </TooltipContent>
-              </Tooltip>
-            )}
-            <InviteFriends />
-          </div>
-          <div className="flex items-center justify-end gap-2">
-            {/*
-            <Settings
-              provider={provider as string}
-              model={model as string}
-              onChange={setProvider}
-              onModelChange={setModel}
-              open={openProvider}
-              error={providerError}
-              isFollowUp={!isSameHtml && isFollowUp}
-              onClose={setOpenProvider}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  callAi();
+                }
+              }}
             />
-            */}
-            <Button
-              size="iconXs"
-              disabled={isAiWorking || !prompt.trim()}
-              onClick={() => callAi()}
-            >
-              <ArrowUp className="size-4" />
-            </Button>
+            {/* Always show Edit button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="xs"
+                  variant={isEditableModeEnabled ? "default" : "outline"}
+                  onClick={() => setIsEditableModeEnabled?.(!isEditableModeEnabled)}
+                  className={classNames("h-[28px]", {
+                    "!text-neutral-400 hover:!text-neutral-200 !border-neutral-600 !hover:!border-neutral-500": !isEditableModeEnabled,
+                  })}
+                >
+                  <Crosshair className="size-4" />
+                  Edit
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent
+                align="start"
+                className="bg-neutral-950 text-xs text-neutral-200 py-1 px-2 rounded-md -translate-y-0.5"
+              >
+                Select an element on the page to ask Retro Builder edit it directly.
+              </TooltipContent>
+            </Tooltip>
+          </div>
+
+          {/* Controls Row */}
+          <div className="flex items-center justify-between gap-2 px-2 pb-2 pt-1 w-full">
+            <div className="flex-1 flex items-center gap-1.5">
+              <ReImagine onRedesign={(md) => callAi(md)} />
+              <InviteFriends />
+            </div>
+            <div className="flex items-center gap-2">
+              <Settings
+                provider={provider as string}
+                model={model as string}
+                onChange={setProvider}
+                onModelChange={setModel}
+                open={openProvider}
+                error={providerError}
+                isFollowUp={!isSameHtml && isFollowUp}
+                onClose={setOpenProvider}
+              />
+              <Button
+                size="iconXs"
+                disabled={isAiWorking || !prompt.trim()}
+                onClick={() => callAi()}
+              >
+                <ArrowUp className="size-4" />
+              </Button>
+            </div>
           </div>
         </div>
+
+        {/* Diff-Patch Update Toggle */}
         {!isSameHtml && (
           <div className="absolute top-0 right-0 -translate-y-[calc(100%+8px)] select-none text-xs text-neutral-400 flex items-center justify-center gap-2 bg-neutral-800 border border-neutral-700 rounded-md p-1 pr-2.5">
             <label
@@ -429,9 +446,7 @@ export function AskAI({
               <Checkbox
                 id="diff-patch-checkbox"
                 checked={isFollowUp}
-                onCheckedChange={(e) => {
-                  setIsFollowUp(e === true);
-                }}
+                onCheckedChange={(e) => setIsFollowUp(e === true)}
               />
               Diff-Patch Update
             </label>
@@ -440,7 +455,7 @@ export function AskAI({
         )}
       </div>
       <audio ref={audio} id="audio" className="hidden">
-  <source src="/success.wav" type="audio/wav" />
+        <source src="/success.wav" type="audio/wav" />
         Your browser does not support the audio element.
       </audio>
     </div>
