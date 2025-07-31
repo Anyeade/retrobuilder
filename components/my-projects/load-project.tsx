@@ -15,7 +15,6 @@ import { Input } from "../ui/input";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-
 export const LoadProject = ({
   fullXsBtn = false,
   onSuccess,
@@ -29,7 +28,6 @@ export const LoadProject = ({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  // Reset state when dialog is reopened
   const handleDialogChange = (isOpen: boolean) => {
     setOpen(isOpen);
     if (!isOpen) {
@@ -68,12 +66,10 @@ export const LoadProject = ({
     if (url) {
       setIsLoading(true);
       try {
-        // Implement your own logic to import a project from a URL
         toast.success("Project imported successfully!");
         setOpen(false);
         setUrl("");
       } catch (error: unknown) {
-        // Type guard for error object
         if (
           typeof error === "object" &&
           error !== null &&
