@@ -51,13 +51,24 @@ export const LoadProject = ({
       toast.success("Project imported successfully!");
       setOpen(false);
       setUrl("");
-    } catch (error: any) {
-      if (error?.response?.data?.redirect) {
-        return router.push(error.response.data.redirect);
+    } catch (error: unknown) {
+      // Type guard for error object
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as { response?: { data?: { redirect?: string; error?: string } } }).response === "object"
+      ) {
+        const errObj = error as { response?: { data?: { redirect?: string; error?: string } } };
+        if (errObj.response?.data?.redirect) {
+          return router.push(errObj.response.data.redirect);
+        }
+        toast.error(
+          errObj.response?.data?.error ?? "Failed to import the project."
+        );
+      } else {
+        toast.error("Failed to import the project.");
       }
-      toast.error(
-        error?.response?.data?.error ?? "Failed to import the project."
-      );
     } finally {
       setIsLoading(false);
     }
