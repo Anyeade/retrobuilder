@@ -15,6 +15,7 @@ import { Input } from "../ui/input";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
+
 export const LoadProject = ({
   fullXsBtn = false,
   onSuccess,
@@ -22,29 +23,34 @@ export const LoadProject = ({
   fullXsBtn?: boolean;
   onSuccess: (project: Project) => void;
 }) => {
-    const router = useRouter();
-
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [fileImported, setFileImported] = useState(false);
 
-  const handleClick = async () => {
-    if (isLoading) return; // Prevent multiple clicks while loading
+  // Reset state when dialog is reopened
+  const handleDialogChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      setUrl("");
+      setFileImported(false);
+      setIsLoading(false);
+    }
+  };
+
+  const handleUrlImport = async () => {
+    if (isLoading) return;
     if (!url) {
       toast.error("Please enter a URL.");
       return;
     }
-
-    // The URL validation and parsing logic is removed as we are no longer using Hugging Face
-
     setIsLoading(true);
     try {
-      // You will need to implement your own logic to import a project from a URL
-      // For now, this will just display a success message
+      // Implement your own logic to import a project from a URL
       toast.success("Project imported successfully!");
       setOpen(false);
       setUrl("");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (error?.response?.data?.redirect) {
         return router.push(error.response.data.redirect);
@@ -58,7 +64,7 @@ export const LoadProject = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogTrigger asChild>
         <div>
           <Button variant="outline" className="max-lg:hidden">
@@ -90,6 +96,7 @@ export const LoadProject = ({
             <Input
               type="file"
               accept=".html"
+              disabled={fileImported}
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
@@ -103,13 +110,17 @@ export const LoadProject = ({
                       user_id: "local",
                       space_id: "local"
                     });
-                    setOpen(false);
+                    setFileImported(true);
+                    toast.success("Project imported from file!");
                   };
                   reader.readAsText(file);
                 }
               }}
               className="!bg-white !border-neutral-300 !text-neutral-800 !placeholder:text-neutral-400 selection:!bg-blue-100"
             />
+            {fileImported && (
+              <div className="text-green-600 text-xs mt-1">File imported! You can close this dialog.</div>
+            )}
           </div>
           <div className="text-sm text-neutral-700 mb-2">
             OR
@@ -123,6 +134,7 @@ export const LoadProject = ({
               placeholder="https://example.com/my-project"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
+              disabled={fileImported}
               className="!bg-white !border-neutral-300 !text-neutral-800 !placeholder:text-neutral-400 selection:!bg-blue-100"
             />
           </div>
@@ -132,8 +144,9 @@ export const LoadProject = ({
             </p>
             <Button
               variant="black"
-              onClick={handleClick}
+              onClick={handleUrlImport}
               className="relative w-full"
+              disabled={fileImported}
             >
               {isLoading ? (
                 <>
@@ -147,6 +160,9 @@ export const LoadProject = ({
                 <>Import Project</>
               )}
             </Button>
+            {fileImported && (
+              <div className="text-xs text-neutral-500 mt-1">URL import disabled after file import.</div>
+            )}
           </div>
         </main>
       </DialogContent>
